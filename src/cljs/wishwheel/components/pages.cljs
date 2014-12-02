@@ -1,8 +1,7 @@
 (ns wishwheel.components.pages
+  "TODO: Reorganize this into multiple namespaces."
   (:require [wishwheel.state :as state]
-            [ajax.core :refer [POST]]
-            [wishwheel.components.items :as item-components]
-            [wishwheel.components.groups :as group-components]))
+            [ajax.core :refer [POST]]))
 
 (defn go-to-path
   [url-path]
@@ -25,6 +24,17 @@
                                :format :json
                                :handler handler})))
 
+(defn group-list-view
+  [group]
+  [:div {:class "group"}
+   [:a {:href (str "#/groups/" (group "id"))}
+    [:strong (group "name")]]])
+
+(defn item-list-view
+  [item]
+  [:div {:class "item"}
+   [:p [:strong (item "name")] " - " (item "price")]])
+
 (defmulti page
   "Given a keyword, finds the method that implements that page and
   returns the Reagent component that will render it."
@@ -36,7 +46,7 @@
     [:input {:id "id-field" :type "number"}] " "
     [:button {:on-click go-to-item} "Go!"]]
    [:div {:class "items"}
-    (map item-components/list-view (state/gets :items))]])
+    (map item-list-view (state/gets :items))]])
 
 (defmethod page :items-show [_]
   (when-let [item (state/gets :items)]
@@ -57,7 +67,7 @@
 
    [:h2 "All Groups"]
    [:div {:class "groups"}
-    (map group-components/list-view (state/gets :groups))]])
+    (map group-list-view (state/gets :groups))]])
 
 (defmethod page :groups-show [_]
   (when-let [group (state/gets :groups)]

@@ -22,10 +22,9 @@
               :where {col val}} db)))
 
 (defn find-one
-  "Return the first record from table that matches the given key/value."
+  "Return the first record from table that matches the given key/value, or nil."
   [table col val]
-  (first (oj/exec {:table table
-                   :where {col val}} db)))
+  (first (find-all table col val)))
 
 
 ;;---------------------------

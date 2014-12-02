@@ -4,7 +4,7 @@
   (:require [reagent.core :refer [atom]]
             [wishwheel.persist :as persist]))
 
-; This is the only definition whose value changes.
+; The only definition whose value changes.
 (defonce app-state (atom {:current-user (persist/fetch ":current-user")}))
 
 (defn gets

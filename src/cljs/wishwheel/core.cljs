@@ -1,7 +1,7 @@
 (ns wishwheel.core
   "Functions for defining routes and kicking off application logic."
   (:require [reagent.core :as reagent :refer [atom]]
-            [wishwheel.components :as page-components]
+            [wishwheel.components :as components]
             [wishwheel.state :as state]
             [ajax.core :refer [GET]]
             [secretary.core :as secretary :include-macros true]
@@ -55,12 +55,15 @@
 ;; -------------------------
 ;; Initialize app
 (defn init! []
-  (reagent/render-component [page-components/main-page]
+  (reagent/render-component [components/main-page]
                             (.getElementById js/document "app")))
 
 ;; -------------------------
 ;; History
-(defn hook-browser-navigation! []
+(defn hook-browser-navigation!
+  "Adds an event listener to the navigation event that triggers
+  secretary's dispatch! function."
+  []
   (doto (History.)
     (events/listen
      EventType/NAVIGATE

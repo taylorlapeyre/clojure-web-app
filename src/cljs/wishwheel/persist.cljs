@@ -10,11 +10,11 @@
 (defn keywordify
   "Given a data structure, converts every identifying member
   of the collection to a keyword."
-  [m]
+  [data]
   (cond
-    (map? m) (into {} (for [[k v] m] [(keyword k) (keywordify v)]))
-    (coll? m) (vec (map keywordify m))
-    :else m))
+    (map? data) (into {} (for [[k v] data] [(keyword k) (keywordify v)]))
+    (coll? data) (vec (map keywordify data))
+    :else data))
 
 (defn fetch
   "Retreives a value that exists in localStorage and return it

@@ -12,6 +12,9 @@
   (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?)}))
   (GET "/api/items" [] api/items-index)
   (GET "/api/items/:id" [] api/items-show)
+  (GET "/api/groups" [] api/groups-index)
+  (GET "/api/groups/:id" [] api/groups-show)
+  (GET "/api/wheels/:id" [] api/wheels-show)
   (resources "/")
   (not-found "Not Found"))
 

@@ -15,6 +15,14 @@
   [items]
   (puts! :items items))
 
+(defn change-groups!
+  [groups]
+  (puts! :groups groups))
+
+(defn change-wheels!
+  [wheels]
+  (puts! :wheels wheels))
+
 (defn change-current-page!
   [page]
   (puts! :current-page page))

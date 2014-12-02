@@ -52,9 +52,15 @@
   "/signin" [id]
   (state/change-current-page! :sign-in))
 
+(secretary/defroute sign-up-path
+  "/signup" []
+  (state/change-current-page! :sign-up))
+
 ;; -------------------------
-;; Initialize app
-(defn init! []
+;;
+(defn init!
+  "This function kicks off the application."
+  []
   (reagent/render-component [components/main-page]
                             (.getElementById js/document "app")))
 

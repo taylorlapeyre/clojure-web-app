@@ -7,11 +7,20 @@
 ; The only definition whose value changes.
 (defonce app-state (atom {:current-user (persist/fetch ":current-user")}))
 
+(defn keywordify
+  "Given a data structure, converts every identifying member
+  of the collection to a keyword."
+  [data]
+  (cond
+    (map? data) (into {} (for [[k v] data] [(keyword k) (keywordify v)]))
+    (coll? data) (vec (map keywordify data))
+    :else data))
+
 (defn gets
   "Get State. Retreives the given key from the app-state. Takes
   and optional default value."
   [k & [default]]
-  (get @app-state k default))
+  (keywordify (get @app-state k default)))
 
 (defn puts!
   "Put State. Potentially destructive, associates k with v in app-state."

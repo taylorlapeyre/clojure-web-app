@@ -17,24 +17,51 @@
 
 (defn attempt-to-sign-in! [event]
   (.preventDefault event)
-  (let [email (.-value (.getElementById js/document "email-field"))
-        password (.-value (.getElementById js/document "password-field"))
-        handler #(do (go-to-path "/")
+  (let [email    (.-value (.getElementById js/document "sign-in-email-field"))
+        password (.-value (.getElementById js/document "sign-in-password-field"))
+        handler #(do (go-to-path "/#")
                      (state/change-current-user! %))]
     (POST "/api/authenticate" {:params {:email email :password password}
                                :format :json
+                               :response-format :json
                                :handler handler})))
+
+(defn attempt-to-sign-up! [event]
+  (.preventDefault event)
+  (let [email      (.-value (.getElementById js/document "sign-up-email-field"))
+        password   (.-value (.getElementById js/document "sign-up-password-field"))
+        first-name (.-value (.getElementById js/document "sign-up-first-name-field"))
+        last-name  (.-value (.getElementById js/document "sign-up-last-name-field"))
+        handler #(do (prn %) (go-to-path "/#")
+                     (state/change-current-user! %))]
+    (POST "/api/users" {:params {:user {:email email
+                                        :password password
+                                        :first_name first-name
+                                        :last_name last-name}}
+                        :format :json
+                        :response-format :json
+                        :handler handler})))
 
 (defn group-list-view
   [group]
   [:div {:class "group"}
-   [:a {:href (str "#/groups/" (group "id"))}
-    [:strong (group "name")]]])
+   [:a {:href (str "#/groups/" (:id group))}
+    [:strong (:name group)]]])
 
 (defn item-list-view
   [item]
   [:div {:class "item"}
-   [:p [:strong (item "name")] " - " (item "price")]])
+   [:p [:strong (:name item)] " - $" (:price item)]])
+
+(defn user-state-box
+  []
+  [:p {:style {:float "right"}}
+   (if-let [user (state/gets :current-user)]
+     [:span "Signed In as: " (:email user) [:br]
+      [:a {:on-click #(state/change-current-user! nil)} "Sign Out"]]
+     [:span
+      [:a {:href "#/signin"} "Sign In"] [:br]
+      [:a {:href "#/signup"} "Sign Up"]])])
 
 (defmulti page
   "Given a keyword, finds the method that implements that page and
@@ -52,20 +79,15 @@
 (defmethod page :items-show [_]
   (when-let [item (state/gets :items)]
     [:div {:class "item-page"}
-     [:h1 (item "name")]
+     [:h1 (:name item)]
      [:ul
-      [:li "Price: " (item "price")]
-      [:li "ID: " (item "id")]]
+      [:li "Price: $" (:price item)]
+      [:li "ID: " (:id item)]]
      [:a {:href "#/"} "Back to Home"]]))
 
 (defmethod page :groups-index [_]
   [:div
-   [:p {:style {:float "right"}}
-    (if-let [user (state/gets :current-user)]
-      [:span "Signed In as: " (:email (state/gets :current-user))
-             [:a {:on-click #(state/change-current-user! nil)} "Sign Out"]]
-      [:a {:href "#/signin"} "Sign In"])]
-
+   [user-state-box]
    [:h2 "All Groups"]
    [:div {:class "groups"}
     (map group-list-view (state/gets :groups))]])
@@ -73,30 +95,40 @@
 (defmethod page :groups-show [_]
   (when-let [group (state/gets :groups)]
     [:div {:class "group-page"}
-     [:h1 (group "name")]
+     [:h1 (:name group)]
      [:h3 "Wish Lists:"]
      [:ul
-      (for [wheel (group "wheels")]
-        [:li [:a {:href (str "#/wheels/" (wheel "id"))}
-              (wheel "name")]])]]))
+      (for [wheel (:wheels group)]
+        [:li [:a {:href (str "#/wheels/" (:id wheel))}
+              (:name wheel)]])]]))
 
 (defmethod page :wheels-show [_]
   (when-let [wheel (state/gets :wheels)]
     [:div {:class "wheel-page"}
-     [:h1 (wheel "name")]
+     [:h1 (:name wheel)]
      [:h3 "Gifts:"]
      [:ul
-      (for [item (wheel "items")]
-        [:li [:a {:href (str "#/items/" (item "id"))}
-              (item "name")]])]]))
+      (for [item (:items wheel)]
+        [:li [:a {:href (str "#/items/" (:id item))}
+              (:name item)]])]]))
 
 (defmethod page :sign-in [_]
-  [:div {:class "Sign In Page"}
+  [:div {:class "sign-in-page"}
    [:h2 "Sign In"]
    [:form {:on-submit attempt-to-sign-in!}
-    [:input {:type "email" :placeholder "example@email.com" :id "email-field"}] " "
-    [:input {:type "password" :placeholder "Password" :id "password-field"}] " "
+    [:input {:type "email" :placeholder "example@email.com" :id "sign-in-email-field"}] " "
+    [:input {:type "password" :placeholder "Password" :id "sign-in-password-field"}] " "
     [:button {:type "submit"} "Sign In"]]])
+
+(defmethod page :sign-up [_]
+  [:div {:class "sign-up-page"}
+   [:h2 "Sign Up"]
+   [:form {:on-submit attempt-to-sign-up!}
+    [:input {:type "email" :placeholder "example@email.com" :id "sign-up-email-field"}] " "
+    [:input {:type "password" :placeholder "Password" :id "sign-up-password-field"}] " "
+    [:input {:type "first_name" :placeholder "First" :id "sign-up-first-name-field"}] " "
+    [:input {:type "last_name" :placeholder "Name" :id "sign-up-last-name-field"}] " "
+    [:button {:type "submit"} "Sign Up"]]])
 
 (defmethod page :default [_]
   [:div "Invalid/Unknown route"])

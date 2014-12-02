@@ -16,6 +16,7 @@
   (GET "/api/groups/:id" []    api/groups-show)
   (GET "/api/wheels/:id" []    api/wheels-show)
   (POST "/api/authenticate" [] api/authenticate-user)
+  (POST "/api/users" []        api/users-create)
   (resources "/")
   (not-found "Not Found"))
 

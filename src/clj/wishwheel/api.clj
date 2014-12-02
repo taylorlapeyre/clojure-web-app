@@ -26,6 +26,13 @@
   [table col val]
   (first (find-all table col val)))
 
+(defn create
+  "Creates a new record in table with the given data. Does not validate, will
+  throw on integrity violation."
+  [table data]
+  (let [key (:generated-key (oj/exec {:table table :insert data} db))]
+    (find-one table :id key)))
+
 
 ;;---------------------------
 ;; Fake database stuff
@@ -53,11 +60,12 @@
 (defn find-one
   "Using static data"
   [table col val]
-  (let [table (get {:items items-table
-                    :groups groups-table
-                    :wheels wheels-table
-                    :users users-table} table)]
-    (first (filter #(= (get % col) val) table))))
+  (first (find-all table col val)))
+
+(defn create
+  "Fake create data."
+  [table data]
+  (find-one table :id 5))
 
 ;;---------------------------
 ;; HTTP helpers
@@ -75,6 +83,14 @@
   []
   (-> (ring/response "Invalid Credentials.")
       (ring/status 403)
+      (ring/content-type "application/json")))
+
+
+(defn bad-request
+  "Returns a 400 Ring HTTP response."
+  [message]
+  (-> (ring/response message)
+      (ring/status 400)
       (ring/content-type "application/json")))
 
 ;;---------------------------
@@ -123,6 +139,10 @@
 ;;---------------------------
 ;; User handlers
 
+(defn valid-user-data?
+  [{:keys [email password first_name last_name]}]
+  (and email password first_name last_name))
+
 (defn authenticate-user
   "Given a email and password, determines if the pair are valid credentials.
   If so, returns the user. Else, 403."
@@ -132,3 +152,14 @@
     (if (and user (= password (:password user)))
       (json-response (dissoc user :password))
       (unauthorized))))
+
+(defn users-create
+  "Creates a new user. If the data provided is valid, returns a 201 with the
+  location of the created user. Else, 400."
+  [{:keys [body] :as request}]
+  (let [{:keys [user]} (json/decode (slurp body) true)]
+    (if (and user (valid-user-data? user))
+      (let [created-user (create :users user)]
+        (ring/created (str "/api/users/" (:id created-user))
+                      (json/encode created-user)))
+      (bad-request "Invalid User data."))))

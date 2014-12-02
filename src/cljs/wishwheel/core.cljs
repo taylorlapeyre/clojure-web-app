@@ -47,6 +47,10 @@
             (state/change-current-page! :wheels-show))]
     (GET (str "/api/wheels/" id) {:handler handler})))
 
+(secretary/defroute sign-in-path
+  "/signin" [id]
+  (state/change-current-page! :sign-in))
+
 ;; -------------------------
 ;; Initialize app
 (defn init! []

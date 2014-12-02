@@ -4,18 +4,22 @@
             [wishwheel.components.items :as item-components]
             [wishwheel.components.groups :as group-components]))
 
+(defn go-to-path
+  [url-path]
+  (set! (.. js/window -location -href) url-path))
+
 (defn go-to-item []
   "Gets the value of the input field for entering an item ID and
   sets the URL to the path to that item."
   (let [input-field (.getElementById js/document "id-field")
         id (.-value input-field)]
-    (set! (.. js/window -location -href) (str "/#/items/" id))))
+    (go-to-path (str "/#/items/" id))))
 
 (defn attempt-to-sign-in! [event]
   (.preventDefault event)
   (let [email (.-value (.getElementById js/document "email-field"))
         password (.-value (.getElementById js/document "password-field"))
-        handler #(do (set! (.. js/window -location -href) "/")
+        handler #(do (go-to-path "/")
                      (state/change-current-user! %))]
     (POST "/api/authenticate" {:params {:email email :password password}
                                :format :json

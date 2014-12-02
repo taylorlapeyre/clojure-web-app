@@ -1,12 +1,13 @@
 (ns wishwheel.core
-    (:require [reagent.core :as reagent :refer [atom]]
-              [wishwheel.components.pages :as page-components]
-              [wishwheel.state :as state]
-              [ajax.core :refer [GET]]
-              [secretary.core :as secretary :include-macros true]
-              [goog.events :as events]
-              [goog.history.EventType :as EventType])
-    (:import goog.History))
+  "Functions for defining routes and kicking off application logic."
+  (:require [reagent.core :as reagent :refer [atom]]
+            [wishwheel.components :as page-components]
+            [wishwheel.state :as state]
+            [ajax.core :refer [GET]]
+            [secretary.core :as secretary :include-macros true]
+            [goog.events :as events]
+            [goog.history.EventType :as EventType])
+  (:import goog.History))
 
 ;; -------------------------
 ;; Routes

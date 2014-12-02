@@ -1,4 +1,5 @@
 (ns wishwheel.api
+  "Functions relating to getting, saving, updating, and deleting data."
   (:require [ring.util.response :as ring]
             [oj.core :as oj]
             [cheshire.core :as json]))
@@ -12,7 +13,8 @@
          :password ""})
 
 (defn find-all
-  "Using the database"
+  "Return all records from a particular table. Optionally takes a key/value
+  to filter the results by before returning."
   ([table]
     (oj/exec {:table table} db))
   ([table col val]
@@ -20,7 +22,7 @@
               :where {col val}} db)))
 
 (defn find-one
-  "Using the database"
+  "Return the first record from table that matches the given key/value."
   [table col val]
   (first (oj/exec {:table table
                    :where {col val}} db)))
@@ -70,7 +72,7 @@
       (ring/content-type "application/json")))
 
 (defn unauthorized
-  "Returns a 403."
+  "Returns a 403 Ring HTTP response."
   []
   (-> (ring/response "Invalid Credentials.")
       (ring/status 403)
@@ -80,44 +82,44 @@
 ;; Item handlers
 
 (defn items-index
-  "Gets all items in the database."
+  "Returns a Ring response containing every item in the db in JSON form."
   [request]
   (json-response (find-all :items)))
 
 (defn items-show
-  "Get a particular item from the database. Expects an :id params key."
+  "Returns a Ring response containing a particular item specified by
+  an id. If it exists, the data is returned in JSON form. Else, 404."
   [request]
-  (let [item (find-one :items :id (Integer/parseInt (get-in request [:params :id])))]
-    (if item
-      (json-response item)
-      (ring/not-found "No item found with that id."))))
+  (if-let [item (find-one :items :id (Integer/parseInt (get-in request [:params :id])))]
+    (json-response item)
+    (ring/not-found "No item found with that id.")))
 
 ;;---------------------------
 ;; Group handlers
 
 (defn groups-index
-  "Gets all groups in the database."
+  "Returns a Ring response containing every group in the db in JSON form."
   [request]
   (json-response (find-all :groups)))
 
 (defn groups-show
-  "Get a particular item from the database. Expects an :id params key."
+  "Returns a Ring response containing a particular group specified by
+  an id. If it exists, the data is returned in JSON form. Else, 404."
   [request]
-  (let [group (find-one :groups :id (Integer/parseInt (get-in request [:params :id])))]
-    (if group
-      (json-response (assoc group :wheels (find-all :wheels :group_id (:id group))))
-      (ring/not-found "No group found with that id."))))
+  (if-let [group (find-one :groups :id (Integer/parseInt (get-in request [:params :id])))]
+    (json-response (assoc group :wheels (find-all :wheels :group_id (:id group))))
+    (ring/not-found "No group found with that id.")))
 
 ;;---------------------------
 ;; Wheel handlers
 
 (defn wheels-show
-  "Get a particular item from the database. Expects an :id params key."
+  "Returns a Ring response containing a particular wheel specified by
+  an id. If it exists, the data is returned in JSON form. Else, 404."
   [request]
-  (let [wheel (find-one :wheels :id (Integer/parseInt (get-in request [:params :id])))]
-    (if wheel
-      (json-response (assoc wheel :items (find-all :items :wheel_id (:id wheel))))
-      (ring/not-found "No wheel found with that id."))))
+  (if-let [wheel (find-one :wheels :id (Integer/parseInt (get-in request [:params :id])))]
+    (json-response (assoc wheel :items (find-all :items :wheel_id (:id wheel))))
+    (ring/not-found "No wheel found with that id.")))
 
 ;;---------------------------
 ;; User handlers

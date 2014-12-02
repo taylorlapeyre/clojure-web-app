@@ -1,5 +1,6 @@
-(ns wishwheel.components.pages
-  "TODO: Reorganize this into multiple namespaces."
+(ns wishwheel.components
+  "TODO: Reorganize this into multiple namespaces.
+  Functions that define React components."
   (:require [wishwheel.state :as state]
             [ajax.core :refer [POST]]))
 

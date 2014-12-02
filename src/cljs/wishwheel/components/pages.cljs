@@ -2,17 +2,17 @@
   (:require [wishwheel.state :as state]
             [wishwheel.components.items :as item-components]))
 
-(defmulti page
-  "Given a keyword, finds the method that implements that page and
-  returns the Reagent page for it."
-  identity)
-
 (defn go-to-item []
   "Gets the value of the input field for entering an item ID and
   sets the URL to the path to that item."
   (let [input-field (.getElementById js/document "id-field")
         id (.-value input-field)]
     (set! (.. js/window -location -href) (str "/#/items/" id))))
+
+(defmulti page
+  "Given a keyword, finds the method that implements that page and
+  returns the Reagent page for it."
+  identity)
 
 (defmethod page :items-index [_]
   [:div [:h2 "All Items"]

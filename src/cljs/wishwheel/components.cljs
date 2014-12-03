@@ -91,7 +91,6 @@
 
 (defmethod page :groups-index [_]
   [:div
-   [user-state-box]
    [:h2 "All Groups"]
    [:div {:class "groups"}
     (map group-list-view (state/gets :groups))]])
@@ -141,4 +140,6 @@
   [:div "Invalid/Unknown route"])
 
 (defn main-page []
-  [:div [page (state/gets :current-page)]])
+  [:div
+    [user-state-box]
+    [page (state/gets :current-page)]])

@@ -93,7 +93,7 @@
       (ring/status 400)
       (ring/content-type "application/json")))
 
-;;---------------------------
+;; ---------------------------
 ;; Item handlers
 
 (defn items-index
@@ -109,7 +109,7 @@
     (json-response item)
     (ring/not-found "No item found with that id.")))
 
-;;---------------------------
+;; ---------------------------
 ;; Group handlers
 
 (defn groups-index
@@ -125,7 +125,7 @@
     (json-response (assoc group :wheels (find-all :wheels :group_id (:id group))))
     (ring/not-found "No group found with that id.")))
 
-;;---------------------------
+;; ---------------------------
 ;; Wheel handlers
 
 (defn wheels-show
@@ -136,7 +136,7 @@
     (json-response (assoc wheel :items (find-all :items :wheel_id (:id wheel))))
     (ring/not-found "No wheel found with that id.")))
 
-;;---------------------------
+;; ---------------------------
 ;; User handlers
 
 (defn valid-user-data?

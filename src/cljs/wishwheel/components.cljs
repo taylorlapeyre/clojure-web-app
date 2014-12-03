@@ -1,6 +1,6 @@
 (ns wishwheel.components
-  "TODO: Reorganize this into multiple namespaces.
-  Functions that define React components."
+  "Functions that define React components.
+  TODO: Reorganize this into multiple namespaces."
   (:require [wishwheel.state :as state]
             [ajax.core :refer [POST]]))
 
@@ -15,7 +15,9 @@
         id (.-value input-field)]
     (go-to-path (str "/#/items/" id))))
 
-(defn attempt-to-sign-in! [event]
+(defn attempt-to-sign-in!
+  "Event handler for the sign in form's submit."
+  [event]
   (.preventDefault event)
   (let [email    (.-value (.getElementById js/document "sign-in-email-field"))
         password (.-value (.getElementById js/document "sign-in-password-field"))
@@ -26,13 +28,15 @@
                                :response-format :json
                                :handler handler})))
 
-(defn attempt-to-sign-up! [event]
+(defn attempt-to-sign-up!
+  "Event handler for the sign up form's submit."
+  [event]
   (.preventDefault event)
   (let [email      (.-value (.getElementById js/document "sign-up-email-field"))
         password   (.-value (.getElementById js/document "sign-up-password-field"))
         first-name (.-value (.getElementById js/document "sign-up-first-name-field"))
         last-name  (.-value (.getElementById js/document "sign-up-last-name-field"))
-        handler #(do (prn %) (go-to-path "/#")
+        handler #(do (go-to-path "/#")
                      (state/change-current-user! %))]
     (POST "/api/users" {:params {:user {:email email
                                         :password password

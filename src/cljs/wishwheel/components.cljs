@@ -110,6 +110,9 @@
   (when-let [wheel (state/gets :wheels)]
     [:div {:class "wheel-page"}
      [:h1 (:name wheel)]
+     [:h3 "By "
+      (get-in wheel [:user :first_name]) " "
+      (get-in wheel [:user :last_name])]
      [:h3 "Gifts:"]
      [:ul
       (for [item (:items wheel)]

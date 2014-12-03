@@ -7,12 +7,12 @@
 ;;---------------------------
 ;; Database stuff
 
-(def db {:subprotocol "mysql"
+#_(def db {:subprotocol "mysql"
          :subname "//127.0.0.1:3306/wishwheel3"
          :user "root"
          :password ""})
 
-(defn find-all
+#_(defn find-all
   "Return all records from a particular table. Optionally takes a key/value
   to filter the results by before returning."
   ([table]
@@ -21,12 +21,12 @@
     (oj/exec {:table table
               :where {col val}} db)))
 
-(defn find-one
+#_(defn find-one
   "Return the first record from table that matches the given key/value, or nil."
   [table col val]
   (first (find-all table col val)))
 
-(defn create
+#_(defn create
   "Creates a new record in table with the given data. Does not validate, will
   throw on integrity violation."
   [table data]
@@ -85,7 +85,6 @@
       (ring/status 403)
       (ring/content-type "application/json")))
 
-
 (defn bad-request
   "Returns a 400 Ring HTTP response."
   [message]
@@ -133,7 +132,9 @@
   an id. If it exists, the data is returned in JSON form. Else, 404."
   [request]
   (if-let [wheel (find-one :wheels :id (Integer/parseInt (get-in request [:params :id])))]
-    (json-response (assoc wheel :items (find-all :items :wheel_id (:id wheel))))
+    (json-response (-> wheel
+                       (assoc :items (find-all :items :wheel_id (:id wheel)))
+                       (assoc :user (find-one :users :id (:user_id wheel)))))
     (ring/not-found "No wheel found with that id.")))
 
 ;; ---------------------------

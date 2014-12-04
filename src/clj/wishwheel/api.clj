@@ -43,7 +43,7 @@
   [group-id]
   (let [memberships (find-all :users_groups :group_id group-id)]
     (if (empty? memberships)
-      memberships
+      []
       (oj/exec {:table :users
                 :select [:email :first_name :last_name]
                 :where {:id (map :user_id memberships)}} db))))
@@ -118,12 +118,14 @@
   [{:keys [body] :as request}]
   (let [{:keys [group token]} (json/decode (slurp body) true)
         api-user (find-one :users :token token)]
-    (if (and api-user group (valid-group-data? group))
-      (let [created-group (create :groups (assoc group :user_id (:id api-user)))]
-        (add-user-to-group (:id api-user) (:id created-group))
-        (ring/created (str "/api/groups/" (:id created-group))
-                      (json/encode created-group)))
-      (bad-request "Invalid group data."))))
+    (cond (not api-user)                  (unauthorized)
+          (not group)                     (ring/not-found "The requested group does not exist.")
+          (not (valid-group-data? group)) (bad-request "Invalid group data.")
+          :else
+          (let [created-group (create :groups (assoc group :user_id (:id api-user)))]
+            (add-user-to-group (:id api-user) (:id created-group))
+            (ring/created (str "/api/groups/" (:id created-group))
+                          (json/encode created-group))))))
 
 (defn groups-adduser
   "Adds a user to the group. If a valid email is given, returns a blank 200.
@@ -138,12 +140,12 @@
           (not api-user)       (unauthorized)
           (not potential-user) (ring/not-found "The requested user does not exist.")
           :else
-          (let [users-in-group (find-all-users-in-group (:id group))]
-            ; (if (or (not ((set users-in-group) api-user))
-            ;         ((set users-in-group) potential-user))
-            ;   (unauthorized)
+          (let [emails-in-group (into #{} (map :email (find-all-users-in-group (:id group))))]
+            (if (or (contains? emails-in-group email)
+                    (not (contains? emails-in-group (:email api-user))))
+              (unauthorized)
               (do (add-user-to-group (:id potential-user) group-id)
-                  (json-response potential-user))))))
+                  (json-response potential-user)))))))
 
 ;; ---------------------------
 ;; Wheel handlers
@@ -155,7 +157,7 @@
   (if-let [wheel (find-one :wheels :id (get-in request [:params :id]))]
     (json-response (-> wheel
                        (assoc :items (find-all :items :wheel_id (:id wheel)))
-                       (assoc :user (find-one :users :id (:user_id wheel)))))
+                       (assoc :user  (find-one :users :id (:user_id wheel)))))
     (ring/not-found "No wheel found with that id.")))
 
 ;; ---------------------------

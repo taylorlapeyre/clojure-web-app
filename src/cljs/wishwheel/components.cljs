@@ -30,8 +30,9 @@
   (.preventDefault event)
   (let [email    (.-value ($ "#sign-in-email-field"))
         password (.-value ($ "#sign-in-password-field"))
-        handler #(do (go-to "/#")
-                     (state/change-current-user! %))]
+        handler  (fn [response]
+                   (go-to "/#")
+                   (state/change-current-user! response))]
     (ajax-post "/api/authenticate" {:email email :password password} handler)))
 
 (defn attempt-to-sign-up!
@@ -42,8 +43,9 @@
         password   (.-value ($ "#sign-up-password-field"))
         first-name (.-value ($ "#sign-up-first-name-field"))
         last-name  (.-value ($ "#sign-up-last-name-field"))
-        handler #(do (go-to "/#")
-                     (state/change-current-user! %))]
+        handler    (fn [response]
+                     (go-to "/#")
+                     (state/change-current-user! response))]
     (ajax-post "/api/users" {:user {:email email
                                     :password password
                                     :first_name first-name
@@ -55,8 +57,9 @@
   (.preventDefault event)
   (let [name (.-value ($ "#group-name-field"))
         token (:token (state/gets :current-user))
-        handler #(do (state/change-groups! %)
-                     (go-to (str "/#/groups/" (:id (state/gets :groups)))))]
+        handler (fn [response]
+                  (go-to (str "/#/groups/" (:id (state/gets :groups))))
+                  (state/change-groups! response))]
     (ajax-post "/api/groups" {:token token
                               :group {:name name}} handler)))
 

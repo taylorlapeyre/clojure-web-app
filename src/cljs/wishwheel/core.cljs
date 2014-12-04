@@ -3,10 +3,11 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [wishwheel.components :as components]
             [wishwheel.state :as state]
-            [ajax.core :refer [GET]]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
-            [goog.history.EventType :as EventType])
+            [goog.history.EventType :as EventType]
+            [wishwheel.http :as http])
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:import goog.History))
 
 (defn go-to
@@ -21,31 +22,31 @@
 
 (secretary/defroute items-index-path
   "/items" []
-  (letfn [(handler [response]
-            (state/change-items! response)
-            (state/change-current-page! :items-index))]
-    (GET "/api/items" {:handler handler})))
+  (go
+    (let [response (<! (http/GET "/api/items"))]
+      (state/change-items! response)
+      (state/change-current-page! :items-index))))
 
 (secretary/defroute items-show-path
   "/items/:id" [id]
-  (letfn [(handler [response]
-            (state/change-items! response)
-            (state/change-current-page! :items-show))]
-    (GET (str "/api/items/" id) {:handler handler})))
+  (go
+    (let [response (<! (http/GET (str "/api/items/" id)))]
+      (state/change-items! response)
+      (state/change-current-page! :items-show))))
 
 (secretary/defroute groups-index-path
   "/" []
-  (letfn [(handler [response]
-            (state/change-groups! response)
-            (state/change-current-page! :groups-index))]
-    (GET "/api/groups" {:handler handler})))
+  (go
+    (let [response (<! (http/GET "/api/groups"))]
+      (state/change-groups! response)
+      (state/change-current-page! :groups-index))))
 
 (secretary/defroute groups-show-path
   #"/groups/(\d+)" [id]
-  (letfn [(handler [response]
-            (state/change-groups! response)
-            (state/change-current-page! :groups-show))]
-    (GET (str "/api/groups/" id) {:handler handler})))
+  (go
+    (let [response (<! (http/GET (str "/api/groups/" id)))]
+      (state/change-groups! response)
+      (state/change-current-page! :groups-show))))
 
 (secretary/defroute groups-new-path
   "/groups/new" []
@@ -55,10 +56,10 @@
 
 (secretary/defroute wheels-show-path
   "/wheels/:id" [id]
-  (letfn [(handler [response]
-            (state/change-wheels! response)
-            (state/change-current-page! :wheels-show))]
-    (GET (str "/api/wheels/" id) {:handler handler})))
+  (go
+    (let [response (<! (http/GET (str "/api/wheels/" id)))]
+      (state/change-wheels! response)
+      (state/change-current-page! :wheels-show))))
 
 (secretary/defroute sign-in-path
   "/signin" [id]

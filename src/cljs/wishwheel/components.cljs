@@ -2,16 +2,10 @@
   "Functions that define React components.
   TODO: Reorganize this into multiple namespaces."
   (:require [wishwheel.state :as state]
-            [ajax.core :refer [POST]]))
+            [wishwheel.http :as http])
+  (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn $ [selector] (.querySelector js/document selector))
-
-(defn ajax-post
-  [url data handler]
-  (POST url {:params data
-             :format :json
-             :response-format :json
-             :handler handler}))
 
 (defn go-to
   [url-path]
@@ -28,48 +22,44 @@
   "Event handler for the sign in form's submit."
   [event]
   (.preventDefault event)
-  (let [email    (.-value ($ "#sign-in-email-field"))
-        password (.-value ($ "#sign-in-password-field"))
-        handler  (fn [response]
-                   (go-to "/#")
-                   (state/change-current-user! response))]
-    (ajax-post "/api/authenticate" {:email email :password password} handler)))
+  (go
+    (let [data {:email (.-value ($ "#sign-in-email-field"))
+                :password (.-value ($ "#sign-in-password-field"))}
+          response (<! (http/POST "/api/authenticate" data))]
+      (state/change-current-user! response)
+      (go-to "/#"))))
 
 (defn attempt-to-sign-up!
   "Event handler for the sign up form's submit."
   [event]
   (.preventDefault event)
-  (let [email      (.-value ($ "#sign-up-email-field"))
-        password   (.-value ($ "#sign-up-password-field"))
-        first-name (.-value ($ "#sign-up-first-name-field"))
-        last-name  (.-value ($ "#sign-up-last-name-field"))
-        handler    (fn [response]
-                     (go-to "/#")
-                     (state/change-current-user! response))]
-    (ajax-post "/api/users" {:user {:email email
-                                    :password password
-                                    :first_name first-name
-                                    :last_name last-name}} handler)))
+  (go
+    (let [data {:email      (.-value ($ "#sign-up-email-field"))
+                :password   (.-value ($ "#sign-up-password-field"))
+                :first_name (.-value ($ "#sign-up-first-name-field"))
+                :last_name  (.-value ($ "#sign-up-last-name-field"))}
+          response (<! (http/POST "/api/users" {:user data}))]
+      (state/change-current-user! response)
+      (go-to "/#"))))
 
 (defn attempt-to-make-group!
   "Event handler for the form to create a new group."
   [event]
   (.preventDefault event)
-  (let [name (.-value ($ "#group-name-field"))
-        token (:token (state/gets :current-user))
-        handler (fn [response]
-                  (go-to (str "/#/groups/" (:id (state/gets :groups))))
-                  (state/change-groups! response))]
-    (ajax-post "/api/groups" {:token token
-                              :group {:name name}} handler)))
+  (go
+    (let [data {:token (:token (state/gets :current-user))
+                :group {:name (.-value ($ "#group-name-field"))}}
+          response (<! (http/POST "/api/groups" data))]
+      (state/change-groups! response)
+      (go-to (str "/#/groups/" (:id (state/gets :groups)))))))
 
 (defn attempt-to-add-user-to-group!
   [user group-id]
-  (let [email (.-value ($ "#add-user-field"))
-        token (:token (state/gets :current-user))
-        handler state/add-user-to-groups!]
-    (ajax-post (str "/api/groups/" group-id "/adduser") {:token token
-                                                         :email email} handler)))
+  (go
+    (let [data {:token (:token (state/gets :current-user))
+                :email (.-value ($ "#add-user-field"))}
+          response (<! (http/POST (str "/api/groups/" group-id "/adduser") data))]
+      (state/add-user-to-groups! response))))
 
 (defn group-list-view
   [group]

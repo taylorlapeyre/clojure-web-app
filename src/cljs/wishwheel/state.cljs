@@ -43,6 +43,12 @@
   [page]
   (puts! :current-page page))
 
+(defn add-user-to-groups!
+  [user]
+  (let [group (gets :groups)
+        new-group (update-in group [:users] conj user)]
+    (puts! :groups new-group)))
+
 (defn change-current-user!
   "Persists the given use data as :current-user and updates the state
   to reflect that."

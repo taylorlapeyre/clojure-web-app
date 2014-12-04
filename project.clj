@@ -19,7 +19,7 @@
                  [ring/ring-defaults "0.1.2"]
                  [prone "0.6.0"]
                  [cheshire "5.3.1"]
-                 [oj "0.1.9"]
+                 [oj "0.2.0"]
                  [compojure "1.2.0"]
                  [selmer "0.7.2"]
                  [environ "1.0.0"]

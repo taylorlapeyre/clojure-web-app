@@ -9,6 +9,12 @@
             [goog.history.EventType :as EventType])
   (:import goog.History))
 
+(defn go-to
+  "Change the current URL.
+  FIXME: This is defined in components as well."
+  [url-path]
+  (set! (.. js/window -location -href) url-path))
+
 ;; -------------------------
 ;; Routes
 (secretary/set-config! :prefix "#")
@@ -35,11 +41,17 @@
     (GET "/api/groups" {:handler handler})))
 
 (secretary/defroute groups-show-path
-  "/groups/:id" [id]
+  #"/groups/(\d+)" [id]
   (letfn [(handler [response]
             (state/change-groups! response)
             (state/change-current-page! :groups-show))]
     (GET (str "/api/groups/" id) {:handler handler})))
+
+(secretary/defroute groups-new-path
+  "/groups/new" []
+  (if (state/gets :current-user)
+    (state/change-current-page! :groups-new)
+    (go-to "/")))
 
 (secretary/defroute wheels-show-path
   "/wheels/:id" [id]

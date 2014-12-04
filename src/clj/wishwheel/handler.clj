@@ -17,6 +17,7 @@
   (POST "/api/groups" []        api/groups-create)
   (POST "/api/groups/:group-id/adduser" [] api/groups-adduser)
   (GET  "/api/wheels/:id" []    api/wheels-show)
+  (POST "/api/wheels" []        api/wheels-create)
   (POST "/api/authenticate" []  api/authenticate-user)
   (POST "/api/users" []         api/users-create)
   (resources "/")

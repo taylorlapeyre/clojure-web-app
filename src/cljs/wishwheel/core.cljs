@@ -61,6 +61,13 @@
       (state/change-wheels! response)
       (state/change-current-page! :wheels-show))))
 
+(secretary/defroute wheels-new-path
+  "/groups/:id/wheels/new" [id]
+  (go
+    (let [response (<! (http/GET (str "/api/groups/" id)))]
+      (state/change-groups! response)
+      (state/change-current-page! :wheels-new))))
+
 (secretary/defroute sign-in-path
   "/signin" [id]
   (state/change-current-page! :sign-in))

@@ -64,26 +64,25 @@
 (defn group-list-view
   [group]
   [:div {:class "group"}
-   [:a {:href (str "#/groups/" (:id group))}
-    [:strong (:name group)]]])
+    [:a {:href (str "#/groups/" (:id group))}
+      [:strong (:name group)]]])
 
 (defn item-list-view
   [item]
-  [:div {:class "item"}
-   [:p [:strong (:name item)] " - $" (:price item)]])
+  [:div.item
+    [:p [:strong (:name item)] " - $" (:price item)]])
 
 (defn navbar
   []
-  [:p {:class "navbar"}
-   [:a {:href "#/"} "All Groups"] " | "
-   [:a {:href "#/items"} "All Items"] [:br]
-   (if-let [user (state/gets :current-user)]
-     [:span "Signed In as: " (:email user) [:br]
-      [:a {:on-click #(state/change-current-user! nil)} "Sign Out"]]
-     [:span
-      [:a {:href "#/signin"} "Sign In"] [:br]
-      [:a {:href "#/signup"} "Sign Up"]])
-   [:hr]])
+  [:p.navbar
+    [:a {:href "#/"} "All Groups"] " | "
+    [:a {:href "#/items"} "All Items"] [:br]
+    (if-let [user (state/gets :current-user)]
+      [:span "Signed In as: " (:email user) [:br]
+        [:a {:on-click #(state/change-current-user! nil)} "Sign Out"]]
+      [:span
+        [:a {:href "#/signin"} "Sign In"] [:br]
+        [:a {:href "#/signup"} "Sign Up"]])])
 
 (defmulti page
   "Given a keyword, finds the method that implements that page and
@@ -92,85 +91,104 @@
 
 (defmethod page :items-index [_]
   [:div [:h2 "All Items"]
-   [:div "View Item with ID of: "
-    [:input {:id "id-field" :type "number"}] " "
-    [:button {:on-click go-to-item} "Go!"]]
-   [:div {:class "items"}
-    (map item-list-view (state/gets :items))]])
+    [:div "View Item with ID of: "
+      [:input#id-field {:type "number"}] " "
+      [:button {:on-click go-to-item} "Go!"]]
+    [:div.items
+      (map item-list-view (state/gets :items))]])
 
 (defmethod page :items-show [_]
   (when-let [item (state/gets :items)]
-    [:div {:class "item-page"}
-     [:h1 (:name item)]
-     [:ul
-      [:li "Price: $" (:price item)]
-      [:li "ID: " (:id item)]]
-     [:a {:href "#/"} "Back to Home"]]))
+    [:div.item-page
+      [:h1 (:name item)]
+      [:ul
+        [:li "Price: $" (:price item)]
+        [:li "ID: " (:id item)]]
+      [:a {:href "#/"} "Back to Home"]]))
 
 (defmethod page :groups-index [_]
   [:div
-   [:h2 "All Groups"]
-   [:div {:class "groups"}
-    (map group-list-view (state/gets :groups))]
-   (when (state/gets :current-user)
-     [:a {:href "#/groups/new" :class "button"} "Create a new Group"])])
+    [:h2 "All Groups"]
+    [:div.groups
+      (map group-list-view (state/gets :groups))]
+    (when (state/gets :current-user)
+      [:a.button {:href "#/groups/new"} "Create a new Group"])])
 
 (defmethod page :groups-show [_]
   (when-let [group (state/gets :groups)]
-    [:div {:class "group-page"}
-     [:h1 (:name group)]
-     (when (= (:user_id group) (:id (state/gets :current-user)))
-       [:p [:strong "Add a user to this Group:"]
-        [:br]
-        [:input {:type "email" :placeholder "another@email.com" :id "add-user-field"}] " "
-        [:button {:on-click #(attempt-to-add-user-to-group! % (:id group))} "Add User"]])
+    [:div.group-page
+      [:h1 (:name group)]
+
+      [:h3 [:a {:href (str "#/groups/" (:id group) "/wheels/new")}
+           "Create a new Wish Wheel in this Group."]]
+
+      (when (= (:user_id group) (:id (state/gets :current-user)))
+        [:p
+          [:strong "Add a user to this Group:"]
+          [:br]
+          [:input#add-user-field {:type "email" :placeholder "another@email.com"}] " "
+          [:button {:on-click #(attempt-to-add-user-to-group! % (:id group))} "Add User"]])
+
      [:h3 "Users in This Group:"]
       [:ul
-       (for [user (:users group)]
-         [:li (:email user)])]
+        (for [user (:users group)]
+          [:li (:email user)])]
+
      [:h3 "Wish Lists:"]
      [:ul
       (for [wheel (:wheels group)]
-        [:li [:a {:href (str "#/wheels/" (:id wheel))}
-              (:name wheel)]])]]))
+        [:li [:a {:href (str "#/wheels/" (:id wheel))} (:name wheel)]])]]))
 
 (defmethod page :groups-new [_]
-  [:div {:class "groups-new"}
-   [:h2 "Create a new Group"]
-   [:form {:on-submit attempt-to-make-group!}
-    [:input {:type "text" :placeholder "Christmas 2014" :id "group-name-field"}] " "
-    [:button {:type "submit"} "Create Group"]]])
+  [:div.groups-new
+    [:h2 "Create a new Group"]
+    [:form {:on-submit attempt-to-make-group!}
+      [:input#group-name-field {:type "text" :placeholder "Christmas 2014"}] " "
+      [:button {:type "submit"} "Create Group"]]])
 
 (defmethod page :wheels-show [_]
   (when-let [wheel (state/gets :wheels)]
-    [:div {:class "wheel-page"}
-     [:h1 (:name wheel)]
-     [:h3 "By "
-      (get-in wheel [:user :first_name]) " "
-      (get-in wheel [:user :last_name])]
-     [:h3 "Gifts:"]
-     [:ul
-      (for [item (:items wheel)]
-        [:li [:a {:href (str "#/items/" (:id item))}
+    [:div.wheel-page
+      [:h1 (:name wheel)]
+      [:h3 "By "
+        (get-in wheel [:user :first_name]) " "
+        (get-in wheel [:user :last_name])]
+      [:h3 "Gifts:"]
+      [:ul
+        (for [item (:items wheel)]
+          [:li
+            [:a {:href (str "#/items/" (:id item))}
               (:name item)]])]]))
 
+(defn item-form-view []
+  [:form
+    [:input#item-name]])
+
+(defmethod page :wheels-new [_]
+  (when-let [group (state/gets :groups)]
+    [:div.wheels-new
+      [:h2 "Create a new Wish Wheel"]
+      [:form {:on-submit attempt-to-make-wheel!}
+        [:input#wheel-name-field {:type "text" :placeholder "My Christmas List"}] " "
+        [:button {:type "submit"} "Create Wish Wheel"]]]))
+
 (defmethod page :sign-in [_]
-  [:div {:class "sign-in-page"}
-   [:h2 "Sign In"]
-   [:form {:on-submit attempt-to-sign-in!}
-    [:input {:type "email" :placeholder "example@email.com" :id "sign-in-email-field"}] " "
-    [:input {:type "password" :placeholder "Password" :id "sign-in-password-field"}] " "
-    [:button {:type "submit"} "Sign In"]]])
+  [:div.sign-in-page
+    [:h2 "Sign In"]
+    [:form {:on-submit attempt-to-sign-in!}
+      [:input#sign-in-email-field {:type "email" :placeholder "example@email.com"}] " "
+      [:input#sign-in-password-field {:type "password" :placeholder "Password"}] " "
+      [:button {:type "submit"} "Sign In"]]])
 
 (defmethod page :sign-up [_]
-  [:div {:class "sign-up-page"}
-   [:h2 "Sign Up"]
-   [:form {:on-submit attempt-to-sign-up!}
-    [:input {:type "email" :placeholder "example@email.com" :id "sign-up-email-field"}] " "
-    [:input {:type "password" :placeholder "Password" :id "sign-up-password-field"}] " "
-    [:input {:type "first_name" :placeholder "First" :id "sign-up-first-name-field"}] " "
-    [:input {:type "last_name" :placeholder "Name" :id "sign-up-last-name-field"}] " "
-    [:button {:type "submit"} "Sign Up"]]])
+  [:div.sign-up-page
+    [:h2 "Sign Up"]
+    [:form {:on-submit attempt-to-sign-up!}
+      [:input#sign-up-email-field {:type "email" :placeholder "example@email.com"}] " "
+      [:input#sign-up-password-field {:type "password" :placeholder "Password"}] " "
+      [:input#sign-up-first-name-field {:type "first_name" :placeholder "First"}] " "
+      [:input#sign-up-last-name-field {:type "last_name" :placeholder "Name"}] " "
+      [:button {:type "submit"} "Sign Up"]]])
 
 (defmethod page :default [_]
   [:div "Invalid/Unknown route"])

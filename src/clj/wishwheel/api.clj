@@ -48,6 +48,16 @@
                 :select [:email :first_name :last_name]
                 :where {:id (map :user_id memberships)}} db))))
 
+(defmacro authorize-before
+  "Only executes body if a user is found with the given api key.
+  If a user was found, binds it to binding."
+  [[token binding] & body]
+  (let [api-user (find-one :users :token token)]
+    (if api-user
+      `(let [~binding ~api-user]
+        ~(cons 'do body))
+      (unauthorized))))
+
 ;;---------------------------
 ;; HTTP helpers
 
@@ -116,16 +126,15 @@
   "Creates a new group. If the data provided is valid, returns a 201 with the
   location of the created group. Else, 400."
   [{:keys [body] :as request}]
-  (let [{:keys [group token]} (json/decode (slurp body) true)
-        api-user (find-one :users :token token)]
-    (cond (not api-user)                  (unauthorized)
-          (not group)                     (ring/not-found "The requested group does not exist.")
-          (not (valid-group-data? group)) (bad-request "Invalid group data.")
-          :else
-          (let [created-group (create :groups (assoc group :user_id (:id api-user)))]
-            (add-user-to-group (:id api-user) (:id created-group))
-            (ring/created (str "/api/groups/" (:id created-group))
-                          (json/encode created-group))))))
+  (let [{:keys [group token]} (json/decode (slurp body) true)]
+    (authorize-before [token api-user]
+      (cond (not group) (ring/not-found "The requested group does not exist.")
+            (not (valid-group-data? group)) (bad-request "Invalid group data.")
+            :else
+            (let [created-group (create :groups (assoc group :user_id (:id api-user)))]
+              (add-user-to-group (:id api-user) (:id created-group))
+              (ring/created (str "/api/groups/" (:id created-group))
+                            (json/encode created-group)))))))
 
 (defn groups-adduser
   "Adds a user to the group. If a valid email is given, returns a blank 200.
@@ -134,21 +143,26 @@
   (let [{:keys [email token]} (json/decode (slurp body) true)
         {:keys [group-id]} params
         group (find-one :groups :id group-id)
-        api-user (find-one :users :token token)
         potential-user (find-one :users :email email)]
-    (cond (not group)          (ring/not-found "The requested group does not exist.")
-          (not api-user)       (unauthorized)
-          (not potential-user) (ring/not-found "The requested user does not exist.")
-          :else
-          (let [emails-in-group (into #{} (map :email (find-all-users-in-group (:id group))))]
-            (if (or (contains? emails-in-group email)
-                    (not (contains? emails-in-group (:email api-user))))
-              (unauthorized)
-              (do (add-user-to-group (:id potential-user) group-id)
-                  (json-response potential-user)))))))
+    (authorize-before [token api-user]
+      (cond (not group)          (ring/not-found "The requested group does not exist.")
+            (not potential-user) (ring/not-found "The requested user does not exist.")
+            :else
+            (let [emails-in-group (into #{} (map :email (find-all-users-in-group (:id group))))]
+              (if (or (contains? emails-in-group email)
+                      (not (contains? emails-in-group (:email api-user))))
+                (unauthorized)
+                (do (add-user-to-group (:id potential-user) group-id)
+                    (json-response potential-user))))))))
 
 ;; ---------------------------
 ;; Wheel handlers
+
+(defn valid-wheel-data?
+  [{:keys [name group_id]}]
+  (and group_id
+       (string? name)
+       (not (empty? name))))
 
 (defn wheels-show
   "Returns a Ring response containing a particular wheel specified by
@@ -159,6 +173,19 @@
                        (assoc :items (find-all :items :wheel_id (:id wheel)))
                        (assoc :user  (find-one :users :id (:user_id wheel)))))
     (ring/not-found "No wheel found with that id.")))
+
+(defn wheels-create
+  "Creates a new wheel. If the data provided is valid, returns a 201 with the
+  location of the created wheel. Else, 400."
+  [{:keys [body] :as request}]
+  (let [{:keys [wheel token]} (json/decode (slurp body) true)]
+    (authorize-before [token api-user]
+      (cond (not wheel) (ring/not-found "The requested wheel does not exist.")
+            (not (valid-wheel-data? wheel)) (bad-request "Invalid wheel data.")
+            :else
+            (let [created-wheel (create :wheels (assoc wheel :user_id (:id api-user)))]
+              (ring/created (str "/api/wheels/" (:id created-wheel))
+                            (json/encode created-wheel)))))))
 
 ;; ---------------------------
 ;; User handlers
